@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일용직 수당 계산기</title>
+    <style>
+        table { width: 100%; }
+        th, td { padding: 10px; text-align: center; }
+        .calendar-day { cursor: pointer; }
+        .selected { background-color: green; color: white; }
+        .results { margin-left: 20px; }
+        .comment-box { width: 100%; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<h2>일용직 수당 계산기</h2>
+
+<div>
+    <label for="yearSelect">년도: </label>
+    <select id="yearSelect"></select>
+    <label for="monthSelect">월: </label>
+    <select id="monthSelect"></select>
+</div>
+
+<div style="display: flex; margin-top: 20px;">
+    <div>
+        <table border="1" id="calendar">
+            <thead>
+                <tr>
+                    <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 달력 날짜가 동적으로 여기에 들어감 -->
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="results">
+        <h3>2024년도 쿠팡 고양1 센터 HUB</h3>  
+        <h3>계산 결과</h3>
+        <p>근무일 수: <span id="workDays">0</span></p>
+        <p>총 근무시간: <span id="totalHours">0</span> 시간</p>
+        <p>이론상 최종 금액: <span id="finalWage">0</span> 원</p>
+        <p>고용보험 공제: <span id="employmentInsurance">0</span> 원</p>
+        <p>국민연금 공제: <span id="pension">0</span> 원</p>
+        <p>건강보험 공제: <span id="healthInsurance">0</span> 원</p>
+        <p>장기요양 공제: <span id="longTermCare">0</span> 원</p>
+        <p>실지급 금액: <span id="netWage">0</span> 원</p>
+    </div>
+</div>
+
+<script>
+    const dailyWage = 10240;
+    const dailyHours = 10;
+    const dayTotalPay = 122880;
+    const employmentInsuranceRate = 0.009;
+    const pensionRate = 0.045;
+    const healthInsuranceRate = 0.03545;
+    const longTermCareRate = 0.1295;
+
+    let selectedDays = [];
+    let weeks = [];
+
+    function renderCalendar(year, month) {
+        const firstDay = new Date(year, month, 1).getDay();
+        const lastDate = new Date(year, month + 1, 0).getDate();
+        const tbody = document.querySelector("#calendar tbody");
+        tbody.innerHTML = '';
+        weeks = [];
+        let date = 1;
+        
+        for (let i = 0; i < 6; i++) {
+            const row = document.createElement('tr');
+            let isRowEmpty = true;
+            const week = [];
+
+            for (let j = 0; j < 7; j++) {
+                const cell = document.createElement('td');
+                cell.className = 'calendar-day';
+                if (i === 0 && j < firstDay || date > lastDate) {
+                    cell.innerHTML = '';
+                } else {
+                    cell.innerHTML = date;
+                    const dayObj = { date: date, selected: false, cell: cell };
+                    cell.addEventListener('click', () => toggleDay(dayObj));
+                    date++;
+                    week.push(dayObj);
+                    isRowEmpty = false;
+                }
+                row.appendChild(cell);
+            }
+
+            if (!isRowEmpty) {
+                tbody.appendChild(row); // 빈 행이 아니면 추가
+                weeks.push(week); // 주차 정보를 저장
+            }
+        }
+    }
+
+    function toggleDay(dayObj) {
+        const { cell, date } = dayObj;
+        
+        if (dayObj.selected) {
+            cell.classList.remove('selected');
+            dayObj.selected = false;
+            selectedDays = selectedDays.filter(d => d !== dayObj);  // 선택 해제 시 해당 날짜 제거
+        } else {
+            cell.classList.add('selected');
+            dayObj.selected = true;
+            selectedDays.push(dayObj);  // 선택 시 해당 날짜 추가
+        }
+
+        calculateWages();
+    }
+
+    function calculateWages() {
+        let totalWorkDays = 0;
+        let totalHours = 0;
+        let totalWages = 0;
+        let totalEmploymentInsurance = 0;
+        let totalPension = 0;
+        let totalHealthInsurance = 0;
+        let totalLongTermCare = 0;
+
+        // 모든 선택된 날짜 계산
+        selectedDays.forEach(day => {
+            if (day.selected) {
+                totalWorkDays++;
+                totalHours += dailyHours;
+                totalWages += dayTotalPay;
+                totalEmploymentInsurance += dayTotalPay * employmentInsuranceRate;
+            }
+        });
+
+        if (totalWorkDays >= 8) {
+            totalPension = totalWages * pensionRate;
+            totalHealthInsurance = totalWages * healthInsuranceRate;
+            totalLongTermCare = totalHealthInsurance * longTermCareRate;
+        }
+
+        const netWage = totalWages - totalEmploymentInsurance - totalPension - totalHealthInsurance - totalLongTermCare;
+
+        document.getElementById('workDays').textContent = totalWorkDays;
+        document.getElementById('totalHours').textContent = totalHours;
+        document.getElementById('finalWage').textContent = totalWages.toLocaleString();
+        document.getElementById('employmentInsurance').textContent = totalEmploymentInsurance.toLocaleString();
+        document.getElementById('pension').textContent = totalPension.toLocaleString();
+        document.getElementById('healthInsurance').textContent = totalHealthInsurance.toLocaleString();
+        document.getElementById('longTermCare').textContent = totalLongTermCare.toLocaleString();
+        document.getElementById('netWage').textContent = netWage.toLocaleString();
+    }
+
+    // 연도와 월 선택 기능
+    const yearSelect = document.getElementById('yearSelect');
+    const monthSelect = document.getElementById('monthSelect');
+
+    function populateYearAndMonth() {
+        const currentYear = new Date().getFullYear();
+        for (let i = currentYear - 5; i <= currentYear + 5; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = i;
+            yearSelect.appendChild(option);
+        }
+
+        for (let i = 0; i < 12; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = i + 1;
+            monthSelect.appendChild(option);
+        }
+
+        yearSelect.value = new Date().getFullYear();
+        monthSelect.value = new Date().getMonth();
+
+        yearSelect.addEventListener('change', updateCalendar);
+        monthSelect.addEventListener('change', updateCalendar);
+    }
+
+    function updateCalendar() {
+        const selectedYear = parseInt(yearSelect.value);
+        const selectedMonth = parseInt(monthSelect.value);
+        renderCalendar(selectedYear, selectedMonth);
+    }
+
+    // 초기 달력 렌더링
+    populateYearAndMonth();
+    renderCalendar(new Date().getFullYear(), new Date().getMonth());
+</script>
+
+</body>
+</html>
