@@ -39,6 +39,9 @@
     </div>
     
     <div class="results">
+        <!-- 코멘트를 입력할 수 있는 텍스트 입력칸 -->
+        <textarea class="comment-box" rows="3" placeholder="여기에 코멘트를 입력하세요..."></textarea>
+        
         <h3>계산 결과</h3>
         <p>근무일 수: <span id="workDays">0</span></p>
         <p>총 근무시간: <span id="totalHours">0</span> 시간</p>
@@ -151,19 +154,21 @@
             totalLongTermCare = totalHealthInsurance * longTermCareRate;
         }
 
+        // 주휴수당을 이론상 최종 금액과 실지급 금액에 포함
+        totalWages += totalWeeklyAllowance;
         const netWage = totalWages - totalEmploymentInsurance - totalPension - totalHealthInsurance - totalLongTermCare;
 
         // 결과를 화면에 표시
         document.getElementById('workDays').textContent = totalWorkDays;
         document.getElementById('totalHours').textContent = totalHours;
-        document.getElementById('finalWage').textContent = totalWages.toLocaleString();
+        document.getElementById('finalWage').textContent = totalWages.toLocaleString();  // 이론상 최종 금액에 주휴수당 포함
         document.getElementById('dailyTotal').textContent = totalDailyPay.toLocaleString();
         document.getElementById('weeklyAllowance').textContent = totalWeeklyAllowance.toLocaleString();
         document.getElementById('employmentInsurance').textContent = totalEmploymentInsurance.toLocaleString();
         document.getElementById('pension').textContent = totalPension.toLocaleString();
         document.getElementById('healthInsurance').textContent = totalHealthInsurance.toLocaleString();
         document.getElementById('longTermCare').textContent = totalLongTermCare.toLocaleString();
-        document.getElementById('netWage').textContent = netWage.toLocaleString();
+        document.getElementById('netWage').textContent = netWage.toLocaleString();  // 실지급 금액에 주휴수당 포함
     }
 
     // 연도와 월 선택 기능
