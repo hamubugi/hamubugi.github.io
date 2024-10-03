@@ -190,3 +190,16 @@
         monthSelect.value = new Date().getMonth();
 
         yearSelect.addEventListener('change', updateCalendar);
+        monthSelect.addEventListener('change', updateCalendar);
+    }
+    function updateCalendar() {
+        const selectedYear = parseInt(yearSelect.value);
+        const selectedMonth = parseInt(monthSelect.value);
+        renderCalendar(selectedYear, selectedMonth);
+    }
+    // 초기 달력 렌더링
+    populateYearAndMonth();
+    renderCalendar(new Date().getFullYear(), new Date().getMonth());
+</script>
+</body>
+</html>
