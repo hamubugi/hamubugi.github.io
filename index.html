@@ -39,11 +39,12 @@
     </div>
     
     <div class="results">
-        <h3>2024년도 쿠팡 고양1 센터 HUB</h3>  
         <h3>계산 결과</h3>
         <p>근무일 수: <span id="workDays">0</span></p>
         <p>총 근무시간: <span id="totalHours">0</span> 시간</p>
         <p>이론상 최종 금액: <span id="finalWage">0</span> 원</p>
+        <p>하루 근무 총합: <span id="dailyTotal">0</span> 원</p>
+        <p>주휴수당 총합: <span id="weeklyAllowance">0</span> 원</p>
         <p>고용보험 공제: <span id="employmentInsurance">0</span> 원</p>
         <p>국민연금 공제: <span id="pension">0</span> 원</p>
         <p>건강보험 공제: <span id="healthInsurance">0</span> 원</p>
@@ -60,6 +61,7 @@
     const pensionRate = 0.045;
     const healthInsuranceRate = 0.03545;
     const longTermCareRate = 0.1295;
+    const weeklyAllowanceRate = 0.2;
 
     let selectedDays = [];
     let weeks = [];
@@ -124,14 +126,22 @@
         let totalPension = 0;
         let totalHealthInsurance = 0;
         let totalLongTermCare = 0;
+        let totalDailyPay = 0;
+        let totalWeeklyAllowance = 0;
 
         // 모든 선택된 날짜 계산
-        selectedDays.forEach(day => {
-            if (day.selected) {
-                totalWorkDays++;
-                totalHours += dailyHours;
-                totalWages += dayTotalPay;
-                totalEmploymentInsurance += dayTotalPay * employmentInsuranceRate;
+        weeks.forEach(week => {
+            let weekWorkDays = week.filter(day => day.selected).length;
+            if (weekWorkDays > 0) {
+                totalWorkDays += weekWorkDays;
+                totalHours += weekWorkDays * dailyHours;
+                totalDailyPay += weekWorkDays * dayTotalPay;
+                totalWages += weekWorkDays * dayTotalPay;
+                totalEmploymentInsurance += weekWorkDays * dayTotalPay * employmentInsuranceRate;
+
+                // 주휴수당 계산
+                let weeklyAllowance = (dailyWage * weekWorkDays * dailyHours) * weeklyAllowanceRate;
+                totalWeeklyAllowance += weeklyAllowance;
             }
         });
 
@@ -143,9 +153,12 @@
 
         const netWage = totalWages - totalEmploymentInsurance - totalPension - totalHealthInsurance - totalLongTermCare;
 
+        // 결과를 화면에 표시
         document.getElementById('workDays').textContent = totalWorkDays;
         document.getElementById('totalHours').textContent = totalHours;
         document.getElementById('finalWage').textContent = totalWages.toLocaleString();
+        document.getElementById('dailyTotal').textContent = totalDailyPay.toLocaleString();
+        document.getElementById('weeklyAllowance').textContent = totalWeeklyAllowance.toLocaleString();
         document.getElementById('employmentInsurance').textContent = totalEmploymentInsurance.toLocaleString();
         document.getElementById('pension').textContent = totalPension.toLocaleString();
         document.getElementById('healthInsurance').textContent = totalHealthInsurance.toLocaleString();
@@ -177,19 +190,3 @@
         monthSelect.value = new Date().getMonth();
 
         yearSelect.addEventListener('change', updateCalendar);
-        monthSelect.addEventListener('change', updateCalendar);
-    }
-
-    function updateCalendar() {
-        const selectedYear = parseInt(yearSelect.value);
-        const selectedMonth = parseInt(monthSelect.value);
-        renderCalendar(selectedYear, selectedMonth);
-    }
-
-    // 초기 달력 렌더링
-    populateYearAndMonth();
-    renderCalendar(new Date().getFullYear(), new Date().getMonth());
-</script>
-
-</body>
-</html>
